@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
 import { User } from './user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +19,16 @@ export class UsersService {
 
   async getById(userId: number) {
     const user = await this.usersRepository.findOne({ id: userId });
+
+    if (user) {
+      return user;
+    }
+
+    throw new HttpException('Пользователь не найден', HttpStatus.NOT_FOUND);
+  }
+
+  async getByEmail(email: string) {
+    const user = await this.usersRepository.findOne({ email });
     return user;
   }
 
@@ -26,9 +38,44 @@ export class UsersService {
     return newUser;
   }
 
+  async update(userId: number, userData: UpdateUserDto) {
+    await this.usersRepository.update({ id: userId }, userData);
+  }
+
   async delete(userId: number) {
     const user = await this.usersRepository.findOne({ id: userId });
     await this.usersRepository.delete(user);
     return user;
+  }
+
+  async setRefreshToken(token: string, userId: number) {
+    const hashedToken = await bcrypt.hash(token, 10);
+
+    await this.usersRepository.update(
+      { id: userId },
+      { hashedRefreshToken: hashedToken },
+    );
+  }
+  async getUserIfRefreshTokenMatches(refreshToken: string, userId: number) {
+    const user = await this.getById(userId);
+
+    if (!user) {
+      throw new HttpException('Пользователь не найден', HttpStatus.NOT_FOUND);
+    }
+
+    const isRefreshTokenMatches = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+
+    if (isRefreshTokenMatches) {
+      return user;
+    }
+  }
+
+  async removeRefreshToken(userId: number) {
+    return this.usersRepository.update(userId, {
+      hashedRefreshToken: null,
+    });
   }
 }
