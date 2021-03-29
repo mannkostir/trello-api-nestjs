@@ -32,10 +32,10 @@ export class AuthController {
   @Post('sign-in')
   async signIn(@Req() request: RequestWithUser) {
     const { user } = request;
-    const { Authorization } = this.authService.getHeaderWithJwtAccessToken(
+    const { Authorization } = this.authService.getHeaderWithAccessToken(
       user.id,
     );
-    const refreshTokenData = this.authService.getCookieWithJwtRefreshToken(
+    const refreshTokenData = this.authService.getCookieWithRefreshToken(
       user.id,
     );
 

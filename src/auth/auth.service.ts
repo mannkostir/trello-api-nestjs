@@ -99,7 +99,7 @@ export class AuthService {
       return false;
     }
   }
-  getHeaderWithJwtAccessToken(userId: number) {
+  getHeaderWithAccessToken(userId: number) {
     const payload: TokenPayload = { userId };
     const token = this.jwtService.sign(payload, {
       expiresIn: `${this.configService.get(
@@ -112,7 +112,7 @@ export class AuthService {
       Authorization: `Bearer ${token}`,
     };
   }
-  getCookieWithJwtRefreshToken(userId: number) {
+  getCookieWithRefreshToken(userId: number) {
     const payload: TokenPayload = { userId };
     const token = this.jwtService.sign(payload, {
       expiresIn: `${this.configService.get(
